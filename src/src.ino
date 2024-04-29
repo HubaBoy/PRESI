@@ -114,7 +114,7 @@ void senso2()
   {
     
     Serial.println("HIT");
-     end = millis()/1000;
+     end = float(millis())/1000;
      time = end - start;
      score = (time > 0) ? (minTime / time) * 1000 : 0;
       if (score > 1000 || score < 0 || time<0|| score == 0) score = 999;
