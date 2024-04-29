@@ -21,11 +21,13 @@ MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
 #define BUF_SIZE 75
 char message[BUF_SIZE] = "HIT IT";
 int IRPin = 2;
-int butPin = 4;
+int butPin = 3;
 float minTime = 0.2;
 float time = 0;
 int score =0;
 bool isHit = false;
+float start;
+float end;
 
 void printText(uint8_t modStart, uint8_t modEnd, char *pMsg)
 {
@@ -85,43 +87,39 @@ void setup()
 {
   mx.begin();
   Serial.begin(9600);
-  pinMode(IRPin, INPUT);
-  pinMode(butPin, INPUT);
+  pinMode(IRPin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(IRPin), senso1, CHANGE);
+  pinMode(butPin, INPUT_PULLUP);
+   attachInterrupt(digitalPinToInterrupt(butPin), senso2, LOW);
   printText(0, MAX_DEVICES - 1, message);
-}
+} 
 
 void loop()
 {
-  delay(1000);
-  if (digitalRead(IRPin) == 0)
-  {
-    if (isHit)
-      isHit = false;
+}
 
-    Serial.println("Punch the reflex back");
-  }
-  else
+void senso1()
+{
+  if(digitalRead(IRPin))start = millis()/1000;
+  if(digitalRead(!IRPin))
   {
-    if (!isHit)
-    {
-      Serial.println("The reflex back is punched");
-      time = 0;
-      while (digitalRead(butPin))
-      {
-        delay(1);
-        time += 0.001;
-      }
-      Serial.println(time);
-      score = (time > 0) ? (minTime / time) * 1000 : 0;
-      if (score > 1000 || score < 0 || time<0|| score == 0)
-        score = 999;
+   if (isHit)
+      isHit = false;
+  }
+}
+
+void senso2()
+{
+  if(!isHit && digitalRead(IRPin))
+  {
+    
+    Serial.println("HIT");
+     end = millis()/1000;
+     time = end - start;
+     score = (time > 0) ? (minTime / time) * 1000 : 0;
+      if (score > 1000 || score < 0 || time<0|| score == 0) score = 999;
       sprintf(message, "%d", score);
-      Serial.println(message);
-      Serial.print("That's your score: ");
-      Serial.println(score);
-      int len = strlen(message);
       printText(0, MAX_DEVICES - 1, message);
-      isHit = true; // Set isHit to true only after processing the hit
-    }
+      isHit = true;
   }
 }
